@@ -1,0 +1,76 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id             String    @id @default(cuid())
+  email          String    @unique
+  name           String
+  phone          String
+  assigned_phone String
+  role           Roles
+  Department     Dept
+  created_at     DateTime  @default(now())
+  call           Call[]
+  message        Message[]
+}
+
+model Call {
+  id              String     @id @default(cuid())
+  caller_no       String
+  receiver_id     String
+  receiver        User       @relation(references: [id], fields: [receiver_id])
+  transcipt       String
+  duration_in_min Int
+  status          CallStatus
+}
+
+model Message {
+  id         String      @id @default(cuid())
+  type       MessageType @default(Text)
+  content    String?
+  file_url   String?
+  created_At DateTime    @default(now())
+  sender_id  String
+  sender     User        @relation(references: [id], fields: [sender_id])
+  chat_id    String
+  chat       Chat        @relation(references: [id], fields: [chat_id])
+}
+
+model Chat {
+  id       String    @id @default(cuid())
+  messages Message[]
+}
+
+enum Dept {
+  Sales
+  Service
+}
+
+enum MessageType {
+  Text
+  Image
+  Video
+  File
+}
+
+enum CallStatus {
+  Pending
+  Completed
+  Missed
+}
+
+enum Roles {
+  Admin
+  Employee
+}

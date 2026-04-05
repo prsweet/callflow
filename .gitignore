@@ -1,0 +1,28 @@
+# Dependencies
+node_modules/
+.bun/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Build outputs
+dist/
+build/
+
+# Prisma generated client
+backend/src/generated/
+
+# Lock files are fine to keep, but ignore OS/editor junk
+.DS_Store
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+
+# IDE
+.vscode/
+.idea/
