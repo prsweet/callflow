@@ -24,12 +24,14 @@
 | **Runtime/Pkg Manager** | Bun | Fast, modern JS runtime |
 | **Language** | TypeScript | Type safety, industry standard |
 | **Styling** | TailwindCSS | Fast UI development |
-| **Telephony** | Twilio (free trial $15 credit) | Industry standard, great docs |
+| **Telephony** | Plivo (free trial with number) | Alternative to Twilio, easier to get a free test number in some regions |
 | **AI Agent** | Groq API (free tier) or Gemini | Fast inference, free |
 | **Transcription** | Deepgram (free 200hrs) or Whisper | Accurate STT |
 | **Backend** | Elysia (Bun) | User already knows it, fast, type-safe |
 | **ORM** | Prisma | Type-safe DB queries + migrations |
-| **Database** | Supabase (Postgres) | Free tier, Auth + Realtime |
+| **Database** | Neon (Postgres) | Free tier, clean Prisma integration, no pooler issues |
+| **Auth** | Manual (JWT + bcrypt) | Full control, no vendor lock-in |
+| **Realtime** | Elysia WebSockets | Built-in WS support, no external dependency |
 | **Frontend** | React (Vite) | Lightweight SPA, no SSR overhead |
 | **Charts** | Recharts | React charting library |
 | **Hosting** | Vercel (frontend) + Railway/Render (backend) | Free tiers |
@@ -39,13 +41,14 @@
 ## 🗓 15-Day Plan
 
 ### Days 1–2: Foundation & Research
-- [ ] Set up accounts: Twilio, Supabase, Groq/Gemini, Vercel
-- [ ] Initialize Next.js project
-- [ ] Design database schema
-- [ ] Set up Supabase tables + auth
+- [x] Set up accounts: Plivo, Neon, Groq/Gemini, Vercel
+- [x] Initialize Vite (React) + Elysia (Bun) project
+- [x] Design database schema (Prisma)
+- [x] Run Prisma migration on Neon
+- [x] Set up manual auth (JWT + bcrypt) — signup, login, JWT middleware built
 
 ### Days 3–5: AI Call Routing Agent
-- [ ] Twilio webhook → server receives call
+- [ ] Plivo webhook → server receives call
 - [ ] AI classifies intent (sales/service/support)
 - [ ] Route call to correct employee group
 - [ ] Handle edge cases (no available employee, unknown intent)
@@ -88,9 +91,12 @@
 | 2026-03-27 | Prisma over raw SQL | Using Prisma ORM for type-safe queries + migrations; Supabase still used for Auth + Realtime |
 | 2026-03-27 | Teaching approach | Guide-and-review style — explain WHY, user writes code, AI reviews |
 | 2026-04-01 | Telephony provider confirmed | Sticking with Twilio for ease of use and quick integration (free trial) |
+| 2026-04-07 | Switched Telephony to Plivo | Twilio wouldn't issue a free number in user's region, moving to Plivo as it's the exact same webhook-based architecture. |
 | 2026-04-05 | Dropped Next.js | Switched to Vite (React) frontend + Elysia (Bun) backend — user knows Elysia, no SSR/SEO needed |
+| 2026-04-06 | Switched to Neon | Dropped Supabase — simpler Prisma setup, no pooler issues. Auth handled manually, WebSockets for realtime. |
 
-> **Project Path**: `/Users/hello/Desktop/100x/Dev/Projects/check/callflow/`
+
+> **Project Path**: `/Users/hello/Desktop/PCode/Projects/callflow/`
 > - Frontend: `callflow/frontend/`
 > - Backend: `callflow/backend/`
 
@@ -99,17 +105,19 @@
 ## 💡 Decisions Made
 
 1. **PWA over native app** — No money for app store fees, works on all devices
-2. **Supabase over Firebase** — Free Postgres, built-in auth, realtime subscriptions
+2. **Neon over Supabase** — Simpler Prisma integration, no pooler/direct URL mess. Auth + Realtime handled manually.
 3. **Vite + Elysia** — Separate frontend/backend. User knows Elysia. No SSR/SEO needed (internal app).
 4. **Anonymous calls** — Employees see Customer #ID, never the real phone number
-5. **Prisma** — Type-safe ORM, works with Supabase Postgres
+5. **Prisma** — Type-safe ORM, works with Neon Postgres
+6. **Manual Auth (JWT + bcrypt)** — Full control, no vendor dependency
+7. **Elysia WebSockets** — Native WS support for realtime call notifications
 
 ---
 
 ## 🏗 Architecture
 
 ```
-Customer Call → Twilio Number
+Customer Call → Plivo Number
                     │
                     ▼ (webhook)
               Elysia Backend (Bun)
@@ -126,7 +134,7 @@ Customer Call → Twilio Number
         React App / PWA (anonymous call + transcript)
                     │
                     ▼
-          Prisma → Supabase Postgres (calls, transcripts, analytics)
+          Prisma → Neon Postgres (calls, transcripts, analytics)
                     │
                     ▼
             Admin Dashboard (owner view)
