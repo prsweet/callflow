@@ -1,34 +1,51 @@
-import { z } from "zod";
+import { t, type Static } from "elysia";
+
+export const signupSchema = t.Object({
+    name: t.String(),
+    phone: t.String(),
+    email: t.String(),
+    password: t.String(),
+    role: t.Union([t.Literal("Employee"), t.Literal("Admin")])
+});
+
+export const loginSchema = t.Object({
+    email: t.String(),
+    password: t.String(),
+    role: t.Union([t.Literal("Employee"), t.Literal("Admin")])
+});
+
+export const customerPhone = t.Object({
+    customerPhone: t.String()
+});
+
+export const speechResult = t.Object({
+    speechResult: t.String()
+});
+
+export type signupSchema = Static<typeof signupSchema>;
+export type loginSchema = Static<typeof loginSchema>;
+export type customerPhone = Static<typeof customerPhone>;
+export type speechResult = Static<typeof speechResult>;
+type Dept = "Sales" | "Service";
 type responseType = {
-    success: boolean,
-    data: object | null,
-    error: string | null
+    success: true,
+    data: object,
+    error: null
+} | {
+    success: false,
+    data: null,
+    error: string
 };
 
-export const signupSchema = z.object({
-    name: z.string(),
-    phone: z.string(),
-    email: z.string(),
-    password: z.string(),
-    role: z.enum(["Employee", "Admin"])
-});
-
-export const loginSchema = z.object({
-    email: z.string(),
-    password: z.string(),
-    role: z.enum(["Employee", "Admin"])
-});
-
-export function response(success: true, data: object, error: null): responseType;
-export function response(success: false, data: null, error: string): responseType;
-export function response(success: boolean, data: object | null, error: string | null): responseType {
+export function response(success: boolean, data: object | null, error: string | null) {
     return { success, data, error } as responseType;
 }
 
 export const errors = {
-    zod400: "INVALID_REQUEST",
+    typeBox400: "INVALID_REQUEST",
     emailConflict409: "EMAIL_ALREADY_EXIST",
     userNotFound404: "USER_NOT_FOUND",
     invalidCredentials402: "INVALID_CREDENTIALS",
-    unauthorized401: "UNAUTHORIZED"
+    unauthorized401: "UNAUTHORIZED",
+    failedInitialisingCall500: "FAILED_INITIATING_CALL"
 }

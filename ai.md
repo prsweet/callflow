@@ -1,4 +1,4 @@
-# This is a readme file for you to get the context of what is happening and you have to act accordingly and you have to make sure that you are following the instructions properly and most important thing you cannot make any edits to the code only i will do that you just have to tell me what to do...
+# (always read this in full) This is a readme file for you to get the context of what is happening and you have to act accordingly and you have to make sure that you are following the instructions properly and most important thing you cannot make any edits to the code only i will do that you just have to tell me what to do...
 
 # AI Call Routing System — Project Context
 
@@ -21,11 +21,11 @@
 
 | Layer | Tech | Why |
 |---|---|---|
-| **Runtime/Pkg Manager** | Bun | Fast, modern JS runtime |
-| **Language** | TypeScript | Type safety, industry standard |
-| **Styling** | TailwindCSS | Fast UI development |
-| **Telephony** | Plivo (free trial with number) | Alternative to Twilio, easier to get a free test number in some regions |
-| **AI Agent** | Groq API (free tier) or Gemini | Fast inference, free |
+| **Runtime/Pkg Manager** | Bun | 
+| **Language** | TypeScript | 
+| **Styling** | TailwindCSS | 
+| **Telephony** | Twilio (free trial $15 credit) |
+| **AI Agent** | Groq API (free tier) or Gemini | 
 | **Transcription** | Deepgram (free 200hrs) or Whisper | Accurate STT |
 | **Backend** | Elysia (Bun) | User already knows it, fast, type-safe |
 | **ORM** | Prisma | Type-safe DB queries + migrations |
@@ -41,14 +41,14 @@
 ## 🗓 15-Day Plan
 
 ### Days 1–2: Foundation & Research
-- [x] Set up accounts: Plivo, Neon, Groq/Gemini, Vercel
+- [x] Set up accounts: Twilio, Neon, Groq/Gemini, Vercel
 - [x] Initialize Vite (React) + Elysia (Bun) project
 - [x] Design database schema (Prisma)
 - [x] Run Prisma migration on Neon
 - [x] Set up manual auth (JWT + bcrypt) — signup, login, JWT middleware built
 
 ### Days 3–5: AI Call Routing Agent
-- [ ] Plivo webhook → server receives call
+- [x] Twilio webhook → server receives call (using cloudflared)
 - [ ] AI classifies intent (sales/service/support)
 - [ ] Route call to correct employee group
 - [ ] Handle edge cases (no available employee, unknown intent)
@@ -91,10 +91,8 @@
 | 2026-03-27 | Prisma over raw SQL | Using Prisma ORM for type-safe queries + migrations; Supabase still used for Auth + Realtime |
 | 2026-03-27 | Teaching approach | Guide-and-review style — explain WHY, user writes code, AI reviews |
 | 2026-04-01 | Telephony provider confirmed | Sticking with Twilio for ease of use and quick integration (free trial) |
-| 2026-04-07 | Switched Telephony to Plivo | Twilio wouldn't issue a free number in user's region, moving to Plivo as it's the exact same webhook-based architecture. |
 | 2026-04-05 | Dropped Next.js | Switched to Vite (React) frontend + Elysia (Bun) backend — user knows Elysia, no SSR/SEO needed |
 | 2026-04-06 | Switched to Neon | Dropped Supabase — simpler Prisma setup, no pooler issues. Auth handled manually, WebSockets for realtime. |
-
 
 > **Project Path**: `/Users/hello/Desktop/PCode/Projects/callflow/`
 > - Frontend: `callflow/frontend/`
@@ -109,15 +107,15 @@
 3. **Vite + Elysia** — Separate frontend/backend. User knows Elysia. No SSR/SEO needed (internal app).
 4. **Anonymous calls** — Employees see Customer #ID, never the real phone number
 5. **Prisma** — Type-safe ORM, works with Neon Postgres
-6. **Manual Auth (JWT + bcrypt)** — Full control, no vendor dependency
 7. **Elysia WebSockets** — Native WS support for realtime call notifications
+8. **Conversational AI Loop** — AI acts as an IVR bot, asking clarifying questions until it has enough context to route the call, rather than relying on a single speech input.
 
 ---
 
 ## 🏗 Architecture
 
 ```
-Customer Call → Plivo Number
+Customer Call → Twilio Number
                     │
                     ▼ (webhook)
               Elysia Backend (Bun)

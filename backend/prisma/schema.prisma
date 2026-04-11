@@ -20,15 +20,25 @@ model User {
   phone          String
   assigned_phone String?
   role           Roles
-  Department     Dept?
+  department     Dept?
   created_at     DateTime  @default(now())
   call           Call[]
-  message        Message[]
+  chat        Chat[]
+  status WorkStatus @default(Free)
+}
+
+model Customer {
+  id String @id @default(cuid())
+  phone String @unique
+  created_at DateTime @default(now())
+  calls Call[]
+  chats Chat[]
 }
 
 model Call {
   id              String     @id @default(cuid())
-  caller_no       String
+  caller_id String
+  caller Customer @relation(references: [id], fields: [caller_id])
   receiver_id     String
   receiver        User       @relation(references: [id], fields: [receiver_id])
   transcipt       String
@@ -42,14 +52,17 @@ model Message {
   content    String?
   file_url   String?
   created_At DateTime    @default(now())
-  sender_id  String
-  sender     User        @relation(references: [id], fields: [sender_id])
+  from_customer Boolean 
   chat_id    String
   chat       Chat        @relation(references: [id], fields: [chat_id])
 }
 
 model Chat {
   id       String    @id @default(cuid())
+  customer_id String
+  customer Customer @relation(references: [id], fields: [customer_id])
+  receiver_id String
+  receiver User @relation(references: [id], fields: [receiver_id])
   messages Message[]
 }
 
@@ -74,4 +87,9 @@ enum CallStatus {
 enum Roles {
   Admin
   Employee
+}
+
+enum WorkStatus {
+  Free
+  On_call
 }

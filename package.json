@@ -1,0 +1,6 @@
+{
+    "scripts": {
+        "be": "cd backend && bun src/index.ts --hot",
+        "fe": "cd frontend && bun vite"
+    }
+}
