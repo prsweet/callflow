@@ -1,5 +1,5 @@
 import { status, type Context } from "elysia";
-import { aiResponseSchema, errors, response, routeDialSchema, type customerPhone, type routeDialType } from "../types";
+import { aiResponseSchema, errors, response, type customerPhone, type routeDialType } from "../types";
 import twilio, { twiml } from "twilio";
 import { GoogleGenAI } from "@google/genai";
 import type { Dept } from "../generated/prisma/enums";
