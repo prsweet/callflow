@@ -87,6 +87,10 @@ const wsConversation = async (ws: any, msg: any) => {
                 }
                 case "ROUTE": {
                     ws.send(JSON.stringify({
+                        type: 'text',
+                        token: `Please wait, आपको ${aiResponse.speech} department के executive से connect किया जा रहा है।`
+                    }));
+                    ws.send(JSON.stringify({
                         type: 'end',
                         handoffData: JSON.stringify({ continue: true, dept: aiResponse.speech })
                     }));
