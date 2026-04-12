@@ -23,6 +23,11 @@ export const aiResponseSchema = t.Object({
     speech: t.String()
 })
 
+
+export type routeDialType = {
+    [key: string]: any,
+    continue: boolean
+}
 export type signupSchema = Static<typeof signupSchema>;
 export type loginSchema = Static<typeof loginSchema>;
 export type customerPhone = Static<typeof customerPhone>;

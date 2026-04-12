@@ -1,23 +1,32 @@
 import { status, type Context } from "elysia";
-import { aiResponseSchema, errors, response, type customerPhone } from "../types";
-import twilio from "twilio";
+import { aiResponseSchema, errors, response, routeDialSchema, type customerPhone, type routeDialType } from "../types";
+import twilio, { twiml } from "twilio";
 import { GoogleGenAI } from "@google/genai";
+import type { Dept } from "../generated/prisma/enums";
+import { prisma } from "../db";
 const VoiceResponse = twilio.twiml.VoiceResponse;
 const client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
 const URL = process.env.URL!;
 const genAI = new GoogleGenAI({ apiKey: process.env.GOOGLE_API_KEY });
-const GOOGLE_SYSTEM_PROMPT = `
-You are a Hinglish-speaking female phone receptionist for '100x Dealers', a tractor dealership business.
-A customer is calling and you must figure out what they need.
-Your job is to determine whether the customer needs the Sales department or the Service department. 
-- Sales: The customer wants to buy a tractor, inquire about prices, models, availability, financing, or anything related to purchasing. 
-- Service: The customer wants to repair, maintain, or service an existing tractor, get spare parts, report a breakdown, or schedule a service visit. 
-Rules: 
-1. If the customer's intent is unclear from what they said, use action 'ASK' and ask ONE short clarifying question in the 'speech' field. Do not ask more than 2 clarifying questions total — if still unclear after 2 questions, make your best guess and route. 
-2. If you are confident about the department, use action 'ROUTE' and set 'speech' to exactly one of: 'Sales' or 'Service'. No other values are allowed. 
-3. If the customer says they don't need help, want to cancel, or the conversation is clearly over, use action 'CLOSE' and set 'speech' to a polite goodbye message. 
-4. Keep your questions brief and natural — you are speaking on a phone call, not writing an essay. 
-5. write font of the language you are speaking like use devnagari hindi font for saying hindi and normal english font when saying in english
+const noExecMessage = "Sorry for the inconvenience, लगता है अभी आपकी परेशानी दूर करने के लिए कोई available नहीं है, please try later"
+const GOOGLE_SYSTEM_PROMPT=`आप 100x Tractors की phone receptionist हैं। यह एक tractor dealership business है। Customer phone पर बात कर रहा है और आपको उसकी ज़रूरत समझनी है।
+आपको सभी धर्मो का आदर करना है तो professional रहना है।
+आपका काम यह पता लगाना है कि customer को Sales department चाहिए या Service department।
+
+- Sales: Customer tractor खरीदना चाहता है, price पूछना चाहता है, models देखना चाहता है, या purchasing से जुड़ी कोई भी बात।
+- Service: Customer अपने tractor की repair, servicing, spare parts, या कोई complaint दर्ज करना चाहता है।
+
+नियम:
+1. हमेशा Hinglish में जवाब दें — Hindi words देवनागरी में लिखें और English words English में लिखें। Example: "क्या आप tractor खरीदना चाहते हैं या service करवाना चाहते हैं?"
+2. कभी भी Hindi को Roman/Latin script में मत लिखें। 
+   ❌ गलत: "Koi baat nahi, have a nice day"
+   ✅ सही: "कोई बात नहीं, have a nice day"
+   ❌ गलत: "Aapka tractor ka model kya hai?"
+   ✅ सही: "आपके tractor का model क्या है?"
+3. अगर customer की ज़रूरत clear नहीं है तो action "ASK" करें और speech में एक छोटा सवाल पूछें। Maximum 2 सवाल पूछें।
+4. अगर department पक्का हो तो action "ROUTE" करें और speech में exactly "Sales" या "Service" लिखें।
+5. अगर customer को help नहीं चाहिए या बात खत्म हो गई है तो action "CLOSE" करें और speech में एक polite goodbye message लिखें।
+6. जवाब छोटे और natural रखें — यह phone call है।
 `;
 
 const triggerOutbound = async({ body }: Context<{ body: customerPhone }>) => {
@@ -37,7 +46,9 @@ const triggerOutbound = async({ body }: Context<{ body: customerPhone }>) => {
 
 const handleInbound = async ({ set }: Context) => {
     const twiml = new VoiceResponse();
-    const connect = twiml.connect();
+    const connect = twiml.connect({
+        action: `https://${URL}/call/route-dial`
+    });
     connect.conversationRelay({
         url: `wss://${URL}/call/ws`,
         ttsProvider: "Amazon",
@@ -50,62 +61,103 @@ const handleInbound = async ({ set }: Context) => {
 }
 
 const wsConversation = async (ws: any, msg: any) => {
-    if (msg.type == 'setup') {
-        console.log("Call Connected:", msg.callSid, "From:", msg.from);
-        return;
-    }
+    try {
+        if (msg.type === 'prompt' && msg.last === true) {
+            const speech = msg.voicePrompt;
+            console.log("customer said", speech);
+            const genResponse = await genAI.models.generateContent({
+                model: 'gemini-3.1-flash-lite-preview',
+                contents: speech,
+                config: {
+                    systemInstruction: GOOGLE_SYSTEM_PROMPT,
+                    responseSchema: aiResponseSchema,
+                    responseMimeType: 'application/json'
+                }
+            });
+            const aiResponse = JSON.parse(genResponse.text as string);
+            console.log("aiResopnse", aiResponse.action, aiResponse.speech);
 
-    if (msg.type === 'prompt' && msg.last === true) {
-        const speech = msg.voicePrompt;
-        console.log("customer said", speech);
-        const genResponse = await genAI.models.generateContent({
-            model: 'gemini-3.1-flash-lite-preview',
-            contents: speech,
-            config: {
-                systemInstruction: GOOGLE_SYSTEM_PROMPT,
-                responseSchema: aiResponseSchema,
-                responseMimeType: 'application/json'
-            }
-        });
-        const aiResponse = JSON.parse(genResponse.text as string);
-        console.log("aiResopnse", aiResponse.action, aiResponse.speech);
-
-        switch (aiResponse.action) {
-            case "ASK": {
-                 ws.send(JSON.stringify({
-                    type: 'text',
-                    token: aiResponse.speech,
-                    last: true
-                }));
-                break;
-            }
-            case "ROUTE": {
-                ws.send(JSON.stringify({
-                    type: 'end',
-                    handoffData: JSON.stringify({ dept: aiResponse.speech })
-                }));
-                break;
-            }
-            case "CLOSE": {
-                ws.send({
-                    type: 'text',
-                    token: aiResponse.speech,
-                    last: true
-                });
-                ws.send({
-                    type: 'end',
-                });
-                break;
+            switch (aiResponse.action) {
+                case "ASK": {
+                    ws.send(JSON.stringify({
+                        type: 'text',
+                        token: aiResponse.speech,
+                        last: true
+                    }));
+                    break;
+                }
+                case "ROUTE": {
+                    ws.send(JSON.stringify({
+                        type: 'end',
+                        handoffData: JSON.stringify({ continue: true, dept: aiResponse.speech })
+                    }));
+                    break;
+                }
+                case "CLOSE": {
+                    ws.send(JSON.stringify({
+                        type: 'text',
+                        token: aiResponse.speech,
+                        last: true
+                    }));
+                    ws.send({ 
+                        type: 'end',
+                        handoffData: JSON.stringify({ continue: false })
+                    });
+                    break;
+                }
             }
         }
+    } catch(e) {
+        ws.send(JSON.stringify({
+            type: 'text',
+            token: "There has been some error please stay with us",
+            last: true
+        }));
     }
 }
 
+const routeDial = async ({ body, set }: Context) => {
+    const twiml = new VoiceResponse();
+    set.headers['content-type'] = 'text/xml';
+    try {
+        console.log(body);
+        const handoffData = JSON.parse((body as any).HandoffData) as routeDialType;
+        if (!handoffData.continue) {
+            twiml.hangup();
+            return twiml.toString();
+        }
+
+        const dept = handoffData.dept;
+        const availableExec = await prisma.user.findMany({
+            where: { department: dept }
+        });
+        
+        if (!availableExec[0]) {
+            twiml.say({
+                voice: "Polly.Kajal-Neural",
+                language: "hi-IN"
+            }, noExecMessage);
+            return twiml.toString();
+        }
+
+        const dial = twiml.dial();
+        availableExec.forEach((a) => dial.number(a.phone));
+        return twiml.toString();
+    } catch(e) {
+        console.log("error route-dial", e);
+        twiml.say({
+            voice: "Polly.Kajal-Neural",
+            language: "hi-IN"
+        }, "there has been an error please stay")
+        return twiml.toString();
+    }
+}
 
 export const callController = {
     handleInbound,
     triggerOutbound,
-    wsConversation
+    wsConversation,
+    routeDial
 }
 
 /*
