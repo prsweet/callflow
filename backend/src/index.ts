@@ -2,6 +2,7 @@ import Elysia, { status } from "elysia";
 import { app as authRoutes } from "./routes/authRoute"
 import { app as callRoutes } from "./routes/callRoutes"
 import { errors, response } from "./types";
+import { callController } from "./controllers/callController";
 
 new Elysia()
     .onError(({ code }) => {

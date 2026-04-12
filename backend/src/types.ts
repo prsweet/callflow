@@ -5,28 +5,27 @@ export const signupSchema = t.Object({
     phone: t.String(),
     email: t.String(),
     password: t.String(),
-    role: t.Union([t.Literal("Employee"), t.Literal("Admin")])
+    role: t.UnionEnum(["Employee", "Admin"])
 });
 
 export const loginSchema = t.Object({
     email: t.String(),
     password: t.String(),
-    role: t.Union([t.Literal("Employee"), t.Literal("Admin")])
+    role: t.UnionEnum(["Employee", "Admin"])
 });
 
 export const customerPhone = t.Object({
     customerPhone: t.String()
 });
 
-export const speechResult = t.Object({
-    speechResult: t.String()
-});
+export const aiResponseSchema = t.Object({
+    action: t.UnionEnum(["ASK", "ROUTE", "CLOSE"]),
+    speech: t.String()
+})
 
 export type signupSchema = Static<typeof signupSchema>;
 export type loginSchema = Static<typeof loginSchema>;
 export type customerPhone = Static<typeof customerPhone>;
-export type speechResult = Static<typeof speechResult>;
-type Dept = "Sales" | "Service";
 type responseType = {
     success: true,
     data: object,
