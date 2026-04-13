@@ -100,3 +100,19 @@ const classifyCall = async({ set, body }: Context<{ body: speechResult }>) => {
         return twiml.toString();
     }
 }
+
+
+## gemini
+const genResponse = await genAI.models.generateContent({
+    model: 'gemini-2.5-flash',
+    contents: speech,
+    config: {
+        systemInstruction: GOOGLE_SYSTEM_PROMPT,
+        responseSchema: aiResponseSchema,
+        responseMimeType: 'application/json'
+    }
+});
+
+
+## repetition on ai response
+fixed by maintaining call transcript

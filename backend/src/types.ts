@@ -18,16 +18,16 @@ export const customerPhone = t.Object({
     customerPhone: t.String()
 });
 
-export const aiResponseSchema = t.Object({
-    action: t.UnionEnum(["ASK", "ROUTE", "CLOSE"]),
-    speech: t.String()
-})
-
 
 export type routeDialType = {
     [key: string]: any,
     continue: boolean
 }
+
+export type aiResponseSchema = {
+    action: "ASK" | "ROUTE" | "CLOSE",
+    speech: string
+};
 export type signupSchema = Static<typeof signupSchema>;
 export type loginSchema = Static<typeof loginSchema>;
 export type customerPhone = Static<typeof customerPhone>;
